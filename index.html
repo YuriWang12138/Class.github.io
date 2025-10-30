@@ -129,30 +129,27 @@
     }
   }
 
-  let selLeft = null;
-  function bindClicks(){
-    document.querySelectorAll('.item').forEach(el=>{
-      el.addEventListener('click',()=>{
-        if(checked) return; // 判分后锁定
-        const side = el.dataset.side; const id = el.dataset.id;
-        if(side==='L'){
-          document.querySelectorAll('#leftList .item').forEach(x=>x.classList.remove('selected'));
-          el.classList.add('selected'); selLeft = id;
-        }else{
-          // 如果该右项已被占用，释放
-          const exist = Object.entries(connections).find(([l,r])=>r===id);
-          if(exist) delete connections[exist[0]];
-          if(selLeft){
-            connections[selLeft] = id; selLeft = null;
-            document.querySelectorAll('#leftList .item').forEach(x=>x.classList.remove('selected'));
-            drawAll();
-          }
-        }
-      });
-    });
+  let selLeft = null, selRight = null;
+  function clearSelections(){
+    document.querySelectorAll('.item').forEach(x=>x.classList.remove('selected'));
+    selLeft=null; selRight=null;
   }
-
-  function checkScore(){
+  function connectNow(){
+    if(!(selLeft && selRight)) return;
+    // 如果右边已被其他左占用，释放
+    const existR = Object.entries(connections).find(([l,r])=>r===selRight);
+    if(existR) delete connections[existR[0]];
+    // 左边若已有连接，覆盖
+    connections[selLeft] = selRight;
+    clearSelections();
+    drawAll();
+  }
+  function toggleSelect(el){
+    const side = el.dataset.side; const id = el.dataset.id;
+    if(side==='L'){
+      if(selLeft===id){ el.classList.remove('selected'); selLeft=null; return; }
+      document.querySelectorAll('#leftList .item').forEach(x=>x.classList.remove('selected'));
+      el.classList.add('selected'); se(){
     let correct=0; for(const [l,r] of Object.entries(connections)) if(l===r) correct++;
     checked=true; scoreEl.textContent = `得分：${correct} / ${items.length}`; drawAll();
   }
