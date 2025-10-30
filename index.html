@@ -3,100 +3,58 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>课堂互动连线题</title>
+  <title>课堂连线题（简洁版）</title>
   <style>
-    :root{--bg:#0b1020;--panel:#121a33;--accent:#6aa3ff;--good:#19d38a;--bad:#ff6b6b;--muted:#8b99b8}
+    :root{--bg:#0b1020;--panel:#121a33;--accent:#6aa3ff;--good:#19d38a;--bad:#ff6b6b}
     *{box-sizing:border-box} body{margin:0;background:linear-gradient(120deg,#0b1020,#141b38);color:#e9eefc;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial}
-    header{padding:16px 20px;border-bottom:1px solid #233055;background:rgba(18,26,51,.7);backdrop-filter:blur(6px);position:sticky;top:0;z-index:10}
-    h1{font-size:20px;margin:0 0 4px 0}
-    .sub{color:#a9b6d6;font-size:13px}
-    .wrap{max-width:1000px;margin:18px auto;padding:0 16px}
+    header{padding:14px 18px;border-bottom:1px solid #233055;background:rgba(18,26,51,.7);backdrop-filter:blur(6px);position:sticky;top:0;z-index:10}
+    h1{font-size:18px;margin:0}
+    .wrap{max-width:1000px;margin:14px auto;padding:0 14px}
     .board{display:grid;grid-template-columns:1fr 1fr;gap:14px;position:relative}
     .col{background:var(--panel);border:1px solid #22305a;border-radius:16px;padding:12px}
     .col h2{margin:4px 0 10px 8px;font-size:14px;color:#c9d6fb;font-weight:600}
     .item{padding:10px 12px;margin:8px;border-radius:12px;border:1px solid #2a3a6e;background:#0f1630;cursor:pointer;user-select:none;line-height:1.25;transition:transform .06s ease,border .1s ease}
     .item:hover{transform:translateY(-1px)}
     .item.selected{outline:2px solid var(--accent);border-color:var(--accent)}
-    .item.locked{opacity:.55;cursor:not-allowed}
-    .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}
-    .btn{background:#18224a;border:1px solid #2a3a6e;color:#e9eefc;padding:10px 14px;border-radius:12px;cursor:pointer;font-weight:600}
-    .btn:hover{filter:brightness(1.06)}
-    .btn.alt{background:#0f1630}
+    .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}
+    .btn{background:#18224a;border:1px solid #2a3a6e;color:#e9eefc;padding:8px 12px;border-radius:12px;cursor:pointer;font-weight:600}
     .score{margin-left:auto;color:#cfe2ff;font-weight:600}
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    .editor{background:#0e1530;border:1px solid #2a3a6e;border-radius:12px;padding:12px}
-    textarea{width:100%;min-height:120px;background:#0b122b;color:#e9eefc;border:1px solid #2a3a6e;border-radius:10px;padding:10px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
-    .hint{font-size:12px;color:#9fb0d6;margin-top:6px}
-    svg{position:absolute;inset:0;pointer-events:none}
-    .legend{font-size:12px;color:#9fb0d6;margin-left:8px}
-    .footer{margin:28px 0 12px;color:#8091bb;font-size:12px}
-    .toast{position:fixed;right:14px;bottom:14px;background:#0f1630;border:1px solid #2a3a6e;padding:10px 12px;border-radius:10px;color:#dfe7ff;opacity:0;transform:translateY(8px);transition:all .25s}
-    .toast.show{opacity:1;transform:translateY(0)}
-    @media (max-width:760px){.board{grid-template-columns:1fr} .toolbar{flex-direction:column} .score{margin-left:0}}
+    svg#wires{position:absolute;inset:0;pointer-events:none;display:block}
+    @media (max-width:760px){.board{grid-template-columns:1fr} .score{margin-left:0}}
   </style>
 </head>
 <body>
-  <header>
-    <h1>课堂互动连线题 <span class="legend">（点击左侧→再点击右侧完成连线）</span></h1>
-    <div class="sub">可自定义题目，手机/电脑均可用；点“发布/分享”可导出给学生扫码作答</div>
-  </header>
-
+  <header><h1>课堂连线题（题目 / 答案）</h1></header>
   <div class="wrap">
     <div class="toolbar">
       <button class="btn" id="btnCheck">判分</button>
-      <button class="btn alt" id="btnReset">重置连线</button>
-      <button class="btn alt" id="btnShuffle">打乱顺序</button>
-      <button class="btn" id="btnShare">发布/分享</button>
+      <button class="btn" id="btnReset">重置</button>
       <div class="score" id="score">得分：0 / 0</div>
     </div>
-
     <div class="board" id="board">
-      <div class="col" id="leftCol"><h2>左列</h2><div id="leftList"></div></div>
-      <div class="col" id="rightCol"><h2>右列</h2><div id="rightList"></div></div>
-      <svg id="wires"></svg>
+      <div class="col"><h2>题目（左列）</h2><div id="leftList"></div></div>
+      <div class="col"><h2>答案（右列）</h2><div id="rightList"></div></div>
+      <svg id="wires" width="0" height="0"></svg>
     </div>
-
-    <div class="grid" style="margin-top:18px">
-      <div class="editor">
-        <b>题目数据（JSON 或 CSV）</b>
-        <textarea id="dataBox" spellcheck="false">[
-  {"left":"资产（Assets）","right":"由企业过去交易形成并由其控制、预期会带来经济利益的资源"},
-  {"left":"负债（Liabilities）","right":"过去交易产生、需以经济利益转移清偿的现时义务"},
-  {"left":"收入（Revenue）","right":"日常活动中形成、导致所有者权益增加的经济利益流入"},
-  {"left":"费用（Expense）","right":"日常活动中发生、导致所有者权益减少的经济利益流出"},
-  {"left":"IFRS 15","right":"客户合同收入确认"}
-]</textarea>
-        <div class="hint">支持两种格式：<br>① JSON 数组（如上）<br>② CSV：每行“左列,右列”。示例：<code>资产,将带来经济利益的资源</code></div>
-        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn" id="btnLoad">载入题目</button>
-          <button class="btn alt" id="btnDownload">下载当前页面（.html）</button>
-        </div>
-      </div>
-      <div class="editor">
-        <b>教师小技巧</b>
-        <ul style="margin:8px 0 0 16px;color:#bcc9eb">
-          <li>“打乱顺序”只打乱右列，保持答案逻辑。</li>
-          <li>连错可再次点击右列已占用项以释放，再连。</li>
-          <li>“发布/分享”可一键在浏览器中生成分享用链接（含题目）。</li>
-          <li>需要多题目轮次？下载多个 html 文件，按节次命名即可。</li>
-        </ul>
-        <div class="hint" style="margin-top:8px">判分后，连线呈绿色（对）或红色（错）。重新答题请点“重置连线”。</div>
-      </div>
-    </div>
-
-    <div class="footer">© 你可以自由复制修改。Made for teaching.</div>
   </div>
 
-  <div class="toast" id="toast"></div>
-
 <script>
+// ======= 只显示题目+答案的简洁版，并修复“无法连线”的问题 =======
 (function(){
+  // 1) 在这里修改你的题目：left ↔ right 一一对应
+  const DATA = [
+    {left:'资产（Assets）', right:'受企业控制、预期带来经济利益的资源'},
+    {left:'负债（Liabilities）', right:'需以经济利益转移清偿的现时义务'},
+    {left:'收入（Revenue）', right:'日常活动形成、导致所有者权益增加的流入'},
+    {left:'费用（Expense）', right:'日常活动发生、导致所有者权益减少的流出'},
+    {left:'IFRS 15', right:'客户合同收入确认'}
+  ];
+
   const leftList = document.getElementById('leftList');
   const rightList = document.getElementById('rightList');
+  const board = document.getElementById('board');
   const wires = document.getElementById('wires');
   const scoreEl = document.getElementById('score');
-  const dataBox = document.getElementById('dataBox');
-  const toast = document.getElementById('toast');
 
   let items = [];           // [{id, left, right}]
   let leftOrder = [];       // [id]
@@ -104,78 +62,57 @@
   let connections = {};     // idLeft -> idRight
   let checked = false;
 
-  // --- Utils ---
   const randId = () => Math.random().toString(36).slice(2,9);
-  function showToast(msg){
-    toast.textContent = msg; toast.classList.add('show');
-    setTimeout(()=>toast.classList.remove('show'), 1800);
-  }
-  function csvToPairs(text){
-    const lines = text.split(/\n+/).map(l=>l.trim()).filter(Boolean);
-    return lines.map(l=>{
-      const [lft, ...rest] = l.split(',');
-      return {left:lft?.trim()||'', right:rest.join(',').trim()};
-    });
-  }
-  function parseData(raw){
-    let pairs = [];
-    try{
-      if(raw.trim().startsWith('[')){
-        pairs = JSON.parse(raw);
-      }else{
-        pairs = csvToPairs(raw);
-      }
-    }catch(e){
-      showToast('数据解析失败，请检查 JSON/CSV 格式');
-      return null;
-    }
-    const norm = pairs.filter(p=>p.left && p.right).map((p,i)=>({id:randId(), left:String(p.left), right:String(p.right)}));
-    if(!norm.length){ showToast('没有有效的题目'); return null; }
-    return norm;
-  }
-  function shuffle(arr){
-    return [...arr].sort(()=>Math.random()-.5);
+  const shuffle = arr => [...arr].sort(()=>Math.random()-.5);
+
+  function ensureSVGSize(){
+    // 关键修复：给 SVG 设置与容器一致的宽高，否则有些浏览器无法正确绘制连线
+    const bb = board.getBoundingClientRect();
+    wires.setAttribute('width', bb.width);
+    wires.setAttribute('height', bb.height);
   }
 
-  // --- Render ---
   function render(){
-    leftList.innerHTML = ''; rightList.innerHTML=''; wires.innerHTML='';
-    scoreEl.textContent = `得分：0 / ${items.length}`;
-    checked = false; connections = {};
+    items = DATA.map(p=>({id:randId(), left:String(p.left), right:String(p.right)}));
     leftOrder = items.map(x=>x.id);
     rightOrder = shuffle(items.map(x=>x.id));
+    leftList.innerHTML = ''; rightList.innerHTML = ''; wires.innerHTML = '';
+    checked = false; connections = {}; scoreEl.textContent = `得分：0 / ${items.length}`;
 
     for(const id of leftOrder){
       const it = items.find(x=>x.id===id);
       const el = document.createElement('div');
-      el.className = 'item'; el.dataset.id = id; el.dataset.side='L'; el.textContent = it.left;
+      el.className='item'; el.dataset.id=id; el.dataset.side='L'; el.textContent=it.left;
       leftList.appendChild(el);
     }
     for(const id of rightOrder){
       const it = items.find(x=>x.id===id);
       const el = document.createElement('div');
-      el.className = 'item'; el.dataset.id = id; el.dataset.side='R'; el.textContent = it.right;
+      el.className='item'; el.dataset.id=id; el.dataset.side='R'; el.textContent=it.right;
       rightList.appendChild(el);
     }
+
     bindClicks();
+    ensureSVGSize();
     drawAll();
   }
 
   function drawLine(elL, elR, status){
     const bbL = elL.getBoundingClientRect();
     const bbR = elR.getBoundingClientRect();
-    const boardBB = document.getElementById('board').getBoundingClientRect();
+    const boardBB = board.getBoundingClientRect();
     const x1 = (bbL.right - boardBB.left);
     const y1 = (bbL.top + bbL.height/2 - boardBB.top);
     const x2 = (bbR.left - boardBB.left);
     const y2 = (bbR.top + bbR.height/2 - boardBB.top);
+
     const path = document.createElementNS('http://www.w3.org/2000/svg','path');
     const dx = Math.max(30, Math.abs(x2-x1)/2);
     const d = `M ${x1} ${y1} C ${x1+dx} ${y1}, ${x2-dx} ${y2}, ${x2} ${y2}`;
     path.setAttribute('d', d);
-    const col = status===true? 'var(--good)' : status===false? 'var(--bad)' : 'var(--accent)';
-    path.setAttribute('stroke', getComputedStyle(document.documentElement).getPropertyValue(col.replace('var','')).trim() || col);
-    path.setAttribute('stroke', col);
+    // 直接使用固定色，避免 CSS 自定义变量在某些浏览器解析异常
+    const color = status===true? '#19d38a' : status===false? '#ff6b6b' : '#6aa3ff';
+    path.setAttribute('stroke', color);
     path.setAttribute('stroke-width','3');
     path.setAttribute('fill','none');
     path.style.filter='drop-shadow(0 0 3px rgba(106,163,255,.6))';
@@ -184,6 +121,7 @@
 
   function drawAll(){
     wires.innerHTML='';
+    ensureSVGSize();
     for(const [lId, rId] of Object.entries(connections)){
       const elL = leftList.querySelector(`.item[data-id="${lId}"]`);
       const elR = rightList.querySelector(`.item[data-id="${rId}"]`);
@@ -191,31 +129,23 @@
     }
   }
 
-  // --- Interaction ---
   let selLeft = null;
   function bindClicks(){
     document.querySelectorAll('.item').forEach(el=>{
       el.addEventListener('click',()=>{
-        if(checked) return; // lock after scoring
-        const side = el.dataset.side;
-        const id = el.dataset.id;
+        if(checked) return; // 判分后锁定
+        const side = el.dataset.side; const id = el.dataset.id;
         if(side==='L'){
           document.querySelectorAll('#leftList .item').forEach(x=>x.classList.remove('selected'));
-          el.classList.add('selected');
-          selLeft = id;
-        }else{ // right side
-          // if this right is already used by some left, free it
+          el.classList.add('selected'); selLeft = id;
+        }else{
+          // 如果该右项已被占用，释放
           const exist = Object.entries(connections).find(([l,r])=>r===id);
-          if(exist){ delete connections[exist[0]]; }
+          if(exist) delete connections[exist[0]];
           if(selLeft){
-            connections[selLeft] = id;
+            connections[selLeft] = id; selLeft = null;
             document.querySelectorAll('#leftList .item').forEach(x=>x.classList.remove('selected'));
-            selLeft = null;
             drawAll();
-          } else {
-            // clicking right without a selected left: try to remove mapping with same left
-            const leftMapped = Object.entries(connections).find(([l,r])=>r===id)?.[0];
-            if(leftMapped){ delete connections[leftMapped]; drawAll(); }
           }
         }
       });
@@ -223,89 +153,16 @@
   }
 
   function checkScore(){
-    let correct = 0;
-    for(const [l,r] of Object.entries(connections)){
-      if(l===r) correct++;
-    }
-    checked = true;
-    scoreEl.textContent = `得分：${correct} / ${items.length}`;
-    drawAll();
+    let correct=0; for(const [l,r] of Object.entries(connections)) if(l===r) correct++;
+    checked=true; scoreEl.textContent = `得分：${correct} / ${items.length}`; drawAll();
   }
+  function resetAll(){ connections={}; checked=false; selLeft=null; scoreEl.textContent = `得分：0 / ${items.length}`; drawAll(); }
 
-  function resetLines(){
-    connections = {}; checked=false; scoreEl.textContent = `得分：0 / ${items.length}`; drawAll();
-  }
-
-  function shuffleRight(){
-    if(checked) { showToast('已判分，先重置再打乱'); return; }
-    rightOrder = shuffle(rightOrder); // reshuffle only right column
-    rightList.innerHTML='';
-    for(const id of rightOrder){
-      const it = items.find(x=>x.id===id);
-      const el = document.createElement('div');
-      el.className = 'item'; el.dataset.id = id; el.dataset.side='R'; el.textContent = it.right;
-      rightList.appendChild(el);
-    }
-    bindClicks();
-    drawAll();
-  }
-
-  function loadFromTextbox(){
-    const parsed = parseData(dataBox.value);
-    if(!parsed) return;
-    // keep existing ids for equal pairs to preserve cache? Not needed.
-    items = parsed.map(p=>({id:randId(), left:p.left, right:p.right}));
-    render();
-    showToast('题目已载入');
-  }
-
-  function downloadSelf(){
-    const html = document.documentElement.outerHTML;
-    const blob = new Blob([html], {type:'text/html'});
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `连线题_${new Date().toISOString().slice(0,10)}.html`;
-    a.click();
-  }
-
-  function shareLink(){
-    // Encode current dataset to URL hash for sharing
-    const raw = encodeURIComponent(btoa(unescape(encodeURIComponent(dataBox.value))));
-    const url = location.origin + location.pathname + '#data=' + raw;
-    navigator.clipboard?.writeText(url).then(()=>{
-      showToast('已复制分享链接，发给学生即可打开作答');
-    }).catch(()=>{
-      prompt('复制以下链接分享给学生：', url);
-    });
-  }
-
-  // Restore from URL hash if present
-  function tryRestoreFromHash(){
-    const m = location.hash.match(/#data=(.+)$/);
-    if(m){
-      try{
-        const decoded = decodeURIComponent(m[1]);
-        const text = decodeURIComponent(escape(atob(decoded)));
-        dataBox.value = text;
-        loadFromTextbox();
-        showToast('已从链接载入题目');
-      }catch(e){ /* ignore */ }
-    }
-  }
-
-  // --- Events ---
   document.getElementById('btnCheck').onclick = checkScore;
-  document.getElementById('btnReset').onclick = resetLines;
-  document.getElementById('btnShuffle').onclick = shuffleRight;
-  document.getElementById('btnLoad').onclick = loadFromTextbox;
-  document.getElementById('btnDownload').onclick = downloadSelf;
-  document.getElementById('btnShare').onclick = shareLink;
+  document.getElementById('btnReset').onclick = resetAll;
   window.addEventListener('resize', drawAll);
 
-  // Init with default data
-  items = parseData(dataBox.value).map(p=>({id:randId(), left:p.left, right:p.right}));
   render();
-  tryRestoreFromHash();
 })();
 </script>
 </body>
